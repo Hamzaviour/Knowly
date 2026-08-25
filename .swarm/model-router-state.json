@@ -1,0 +1,93 @@
+{
+  "totalDecisions": 3,
+  "modelDistribution": {
+    "haiku": 0,
+    "sonnet": 1,
+    "opus": 2,
+    "inherit": 0
+  },
+  "avgComplexity": 0.5070050669923268,
+  "avgConfidence": 0.6626148067855725,
+  "circuitBreakerTrips": 3,
+  "lastUpdated": "2026-08-25T17:20:46.859Z",
+  "learningHistory": [
+    {
+      "task": "Review the Knowly backend changes for correctness and security. Check these files:\n1. backend/app/wo",
+      "model": "opus",
+      "complexity": 0.7014835164835165,
+      "outcome": "failure",
+      "timestamp": "2026-08-25T17:20:46.233Z"
+    },
+    {
+      "task": "Verify the Knowly backend pyproject.toml has all needed dependencies for the new background task sys",
+      "model": "opus",
+      "complexity": 0.5405714285714285,
+      "outcome": "failure",
+      "timestamp": "2026-08-25T17:20:46.547Z"
+    },
+    {
+      "task": "Scan the Knowly backend codebase at E:\\Work\\Projects\\Knowly\\backend\\ for existing patterns around ba",
+      "model": "sonnet",
+      "complexity": 0.5190829787234043,
+      "outcome": "failure",
+      "timestamp": "2026-08-25T17:20:46.859Z"
+    }
+  ],
+  "version": 2,
+  "priors": {
+    "low": {
+      "haiku": {
+        "alpha": 1,
+        "beta": 1
+      },
+      "sonnet": {
+        "alpha": 1,
+        "beta": 1
+      },
+      "opus": {
+        "alpha": 1,
+        "beta": 1
+      },
+      "inherit": {
+        "alpha": 1,
+        "beta": 1
+      }
+    },
+    "med": {
+      "haiku": {
+        "alpha": 1,
+        "beta": 1
+      },
+      "sonnet": {
+        "alpha": 1,
+        "beta": 2
+      },
+      "opus": {
+        "alpha": 1,
+        "beta": 2
+      },
+      "inherit": {
+        "alpha": 1,
+        "beta": 1
+      }
+    },
+    "high": {
+      "haiku": {
+        "alpha": 1,
+        "beta": 1
+      },
+      "sonnet": {
+        "alpha": 1,
+        "beta": 1
+      },
+      "opus": {
+        "alpha": 1,
+        "beta": 2
+      },
+      "inherit": {
+        "alpha": 1,
+        "beta": 1
+      }
+    }
+  }
+}

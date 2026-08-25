@@ -1,0 +1,41 @@
+{
+  "agents": {
+    "agent-1787678431480-mjlw6f": {
+      "agentId": "agent-1787678431480-mjlw6f",
+      "agentType": "ruflo-core:reviewer",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 1,
+      "config": {},
+      "createdAt": "2026-08-25T17:20:33.334Z",
+      "model": "opus",
+      "modelRoutedBy": "router",
+      "provider": "anthropic"
+    },
+    "agent-1787678433486-yhb7r0": {
+      "agentId": "agent-1787678433486-yhb7r0",
+      "agentType": "ruflo-core:coder",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 1,
+      "config": {},
+      "createdAt": "2026-08-25T17:20:33.493Z",
+      "model": "opus",
+      "modelRoutedBy": "router",
+      "provider": "anthropic"
+    },
+    "agent-1787678433514-ptdajl": {
+      "agentId": "agent-1787678433514-ptdajl",
+      "agentType": "ruflo-core:researcher",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 1,
+      "config": {},
+      "createdAt": "2026-08-25T17:20:33.518Z",
+      "model": "sonnet",
+      "modelRoutedBy": "router",
+      "provider": "anthropic"
+    }
+  },
+  "version": "3.0.0"
+}
