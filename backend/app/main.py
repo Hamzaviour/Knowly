@@ -5,13 +5,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import engine, Base
 from app.routers import (
-    health, documents, chat, comparison, research, reports, workflows, analytics, workspaces, background_tasks
+    auth, health, documents, chat, comparison, research, reports, workflows, analytics, workspaces, background_tasks, stripe
 )
 from app.workflows.runner import runner
 
 
+import app.models  # Ensure all model tables are registered with Base
+Base.metadata.create_all(bind=engine)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)
     await runner.start()
     yield
     await runner.shutdown()
@@ -36,6 +41,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router, prefix=settings.API_V1_STR)
 app.include_router(health.router, prefix=settings.API_V1_STR)
 app.include_router(documents.router, prefix=settings.API_V1_STR)
 app.include_router(chat.router, prefix=settings.API_V1_STR)
@@ -45,6 +51,10 @@ app.include_router(reports.router, prefix=settings.API_V1_STR)
 app.include_router(workflows.router, prefix=settings.API_V1_STR)
 app.include_router(analytics.router, prefix=settings.API_V1_STR)
 app.include_router(background_tasks.router, prefix=settings.API_V1_STR)
+app.include_router(stripe.router, prefix=f"{settings.API_V1_STR}/stripe")
+app.include_router(stripe.router, prefix=f"{settings.API_V1_STR}/billing")
+app.include_router(stripe.router, prefix="/api/billing")
+app.include_router(stripe.router, prefix="/api/stripe")
 
 
 @app.get("/")

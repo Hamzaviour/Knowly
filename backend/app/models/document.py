@@ -21,6 +21,7 @@ class Document(Base):
     workspace = relationship("Workspace", back_populates="documents")
     chunks = relationship("DocumentChunk", back_populates="document", cascade="all, delete-orphan")
     kb_links = relationship("KBDocumentLink", back_populates="document", cascade="all, delete-orphan")
+    shares = relationship("DocumentShare", back_populates="document", cascade="all, delete-orphan")
 
 class DocumentChunk(Base):
     __tablename__ = "document_chunks"
@@ -50,3 +51,14 @@ class Citation(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     chunk = relationship("DocumentChunk", back_populates="citations")
+
+class DocumentShare(Base):
+    __tablename__ = "document_shares"
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    document_id = Column(String(36), ForeignKey("documents.id"), nullable=False, index=True)
+    shared_by_user_id = Column(String(36), nullable=True)
+    shared_with_email = Column(String(255), nullable=False, index=True)
+    permission = Column(String(50), default="viewer", nullable=False) # viewer, editor, admin
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    document = relationship("Document", back_populates="shares")

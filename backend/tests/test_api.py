@@ -41,12 +41,13 @@ class TestDocuments:
 
     def test_list_after_upload(self, client):
         files = {"file": ("list-test.txt", b"x" * 100, "text/plain")}
-        client.post("/api/v1/documents/upload", files=files)
+        client.post("/api/v1/documents/upload", files=files, data={"workspace_id": "test-ws-clear"})
         r = client.get("/api/v1/documents?workspace_id=test-ws-clear")
         assert r.status_code == 200
         docs = r.json()
         assert len(docs) >= 1
         assert any(d["title"] == "list-test.txt" for d in docs)
+
 
 
 class TestAnalytics:
@@ -170,3 +171,94 @@ class TestAuth:
         # No auth header means anon allowed — no exception
         r = client.get("/api/v1/health")
         assert r.status_code == 200
+
+
+class TestStripeAndBilling:
+    def test_usage_endpoint(self, client):
+        r = client.get("/api/v1/stripe/usage")
+        assert r.status_code == 200
+        data = r.json()
+        assert "docs_count" in data
+        assert "queries_this_month" in data
+        assert data["free_limit"] == 5
+
+    def test_create_checkout_session(self, client):
+        r = client.post("/api/v1/stripe/create-checkout-session", json={"plan": "pro", "email": "test@knowly.ai"})
+        assert r.status_code == 200
+        data = r.json()
+        assert "url" in data
+
+    def test_stripe_webhook_flow(self, client, db):
+        # 1. Test checkout.session.completed
+        event_payload = {
+            "type": "checkout.session.completed",
+            "data": {
+                "object": {
+                    "client_reference_id": "test-user-sub-1",
+                    "customer": "cus_test_12345",
+                    "subscription": "sub_test_12345",
+                    "customer_email": "pro_user@knowly.ai"
+                }
+            }
+        }
+        r = client.post("/api/billing/webhook/", json=event_payload)
+        assert r.status_code == 200
+        assert r.json()["status"] == "success"
+
+        # 2. Test customer.subscription.deleted
+        deleted_payload = {
+            "type": "customer.subscription.deleted",
+            "data": {
+                "object": {
+                    "id": "sub_test_12345",
+                    "customer": "cus_test_12345"
+                }
+            }
+        }
+        r2 = client.post("/api/v1/stripe/webhook", json=deleted_payload)
+        assert r2.status_code == 200
+        assert r2.json()["status"] == "success"
+
+
+class TestUploadLimitsAndSharing:
+    def test_document_sharing_crud(self, client):
+        # 1. Upload a document
+        r = client.post(
+            "/api/v1/documents/upload",
+            files={"file": ("shareable_contract.txt", b"Confidential master agreement content.")},
+            data={"workspace_id": "default-workspace"}
+        )
+        assert r.status_code == 200
+        doc_id = r.json()["id"]
+
+        # 2. Share document by email
+        share_res = client.post(
+            f"/api/v1/documents/{doc_id}/share",
+            json={"email": "colleague@acme.corp", "permission": "editor"}
+        )
+        assert share_res.status_code == 200
+        share_data = share_res.json()["share"]
+        assert share_data["shared_with_email"] == "colleague@acme.corp"
+        assert share_data["permission"] == "editor"
+        share_id = share_data["id"]
+
+        # 3. Get document shares
+        shares_list_res = client.get(f"/api/v1/documents/{doc_id}/shares")
+        assert shares_list_res.status_code == 200
+        shares = shares_list_res.json()
+        assert len(shares) >= 1
+        assert any(s["shared_with_email"] == "colleague@acme.corp" for s in shares)
+
+        # 4. Get shared-with-me
+        with_me_res = client.get("/api/v1/documents/shared/with-me?email=colleague@acme.corp")
+        assert with_me_res.status_code == 200
+        assert len(with_me_res.json()) >= 1
+
+        # 5. Revoke share
+        revoke_res = client.delete(f"/api/v1/documents/{doc_id}/shares/{share_id}")
+        assert revoke_res.status_code == 200
+        assert revoke_res.json()["status"] == "revoked"
+
+        # 6. Cleanup doc
+        del_res = client.delete(f"/api/v1/documents/{doc_id}")
+        assert del_res.status_code == 200

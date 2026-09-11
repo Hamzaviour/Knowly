@@ -18,6 +18,7 @@ class ChatRequest(BaseModel):
     session_id: Optional[str] = None
     mode: str = "standard" # standard, deep_research, compare, analyst
     knowledge_base_ids: Optional[List[str]] = None
+    api_keys: Optional[Dict[str, str]] = None
 
 class CitationSchema(BaseModel):
     citation_id: Optional[str] = None

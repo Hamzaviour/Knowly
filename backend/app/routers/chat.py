@@ -38,11 +38,26 @@ async def chat_with_workspace(req: ChatRequest, db: Session = Depends(get_db)):
         db.add(session)
         db.commit()
 
-    # 3. Process via AI Orchestrator
+    # 3. Load conversation history for multi-turn context (last 10 exchanges = 20 messages)
+    prior_messages = (
+        db.query(ChatMessage)
+        .filter(ChatMessage.session_id == session_id)
+        .order_by(ChatMessage.id.asc())
+        .limit(20)
+        .all()
+    )
+    conversation_history = [
+        {"role": m.role, "content": m.content}
+        for m in prior_messages
+    ]
+
+    # 4. Process via AI Orchestrator (with history for multi-turn follow-ups)
     orchestration_result = await AgentOrchestrator.process_request(
         query=req.query,
         mode=req.mode,
-        document_chunks=chunks_data
+        document_chunks=chunks_data,
+        api_keys=req.api_keys,
+        conversation_history=conversation_history
     )
 
     answer_text = orchestration_result.get("answer", "")
@@ -51,7 +66,7 @@ async def chat_with_workspace(req: ChatRequest, db: Session = Depends(get_db)):
     tokens = orchestration_result.get("tokens", {})
     cost = orchestration_result.get("cost_usd", 0.0)
 
-    # 4. Record messages and metrics
+    # 5. Record messages and metrics
     msg_user = ChatMessage(session_id=session_id, role="user", content=req.query)
     msg_ai = ChatMessage(
         session_id=session_id,

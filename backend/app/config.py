@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: Optional[str] = None
     ANTHROPIC_API_KEY: Optional[str] = None
     GROQ_API_KEY: Optional[str] = None
+    GEMINI_API_KEY: Optional[str] = None
 
     # Default Models
     DEFAULT_FAST_MODEL: str = "groq/llama-3.3-70b-versatile"
@@ -29,8 +30,21 @@ class Settings(BaseSettings):
     # CORS - comma-separated origins, defaults to dev hosts
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:8000"
 
+    # Stripe
+    STRIPE_SECRET_KEY: Optional[str] = None
+    STRIPE_WEBHOOK_SECRET: Optional[str] = None
+    STRIPE_PRICE_ID: Optional[str] = None
+    STRIPE_PRO_PRICE_ID: str = "price_pro_placeholder"
+
+    # Plan Limits
+    FREE_PLAN_DOC_LIMIT: int = 5
+
     # Environment
     ENVIRONMENT: str = "development"
+
+    @property
+    def effective_stripe_price_id(self) -> str:
+        return self.STRIPE_PRICE_ID or self.STRIPE_PRO_PRICE_ID or "price_pro_placeholder"
 
     @property
     def cors_origins_list(self) -> List[str]:

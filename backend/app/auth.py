@@ -1,28 +1,25 @@
 from datetime import datetime, timedelta
 from typing import Optional
-import hashlib
-import secrets
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
+import bcrypt
 
 from app.config import settings
 from app.database import get_db
 from app.models.user import User
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    return bcrypt.checkpw(plain.encode(), hashed.encode())
 
 
 def create_access_token(user_id: str, expires_minutes: Optional[int] = None) -> str:
@@ -52,6 +49,8 @@ def get_current_user(
         return None
     return db.query(User).filter(User.id == user_id).first()
 
+get_optional_user = get_current_user
+
 
 def require_user(
     user: Optional[User] = Depends(get_current_user),
@@ -66,7 +65,10 @@ def require_user(
 
 
 def generate_api_key() -> tuple[str, str]:
-    """Return (raw_key, hashed_key). Show raw once, store hash."""
-    raw = f"kly_{secrets.token_urlsafe(32)}"
+    """Generate a raw API key (starts with 'kly_') and its SHA-256 hash."""
+    import hashlib
+    import secrets
+    raw = f"kly_{secrets.token_hex(24)}"
     hashed = hashlib.sha256(raw.encode()).hexdigest()
     return raw, hashed
+
